@@ -3,7 +3,7 @@
 #define BOARD_PID		"QM-B1"
 #define BOARD_NAME		"QM-B1"
 #define BOARD_DESC		"Qianmo Wireless Router"
-#define BOARD_VENDOR_NAME	"240038901@qq.com Technology"
+#define BOARD_VENDOR_NAME	"Qianmo Technology"
 #define BOARD_VENDOR_URL	"https://www.qianmo.com/"
 #define BOARD_MODEL_URL		"https://www.qianmo.com/"
 #define BOARD_BOOT_TIME		30
