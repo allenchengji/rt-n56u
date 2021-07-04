@@ -21,61 +21,49 @@
 <script type="text/javascript" src="/popup.js"></script>
 <script>
 var $j = jQuery.noConflict();
-
 $j(document).ready(function() {
 	init_itoggle('vpnc_enable', change_vpnc_enabled);
-
 	$j("#tab_vpnc_cfg, #tab_vpnc_ssl").click(function(){
 		var newHash = $j(this).attr('href').toLowerCase();
 		showTab(newHash);
 		return false;
 	});
 });
-
 </script>
 <script>
-
 lan_ipaddr_x = '<% nvram_get_x("", "lan_ipaddr"); %>';
 lan_netmask_x = '<% nvram_get_x("", "lan_netmask"); %>';
 fw_enable_x = '<% nvram_get_x("", "fw_enable_x"); %>';
 vpnc_state_last = '<% nvram_get_x("", "vpnc_state_t"); %>';
 ip6_service = '<% nvram_get_x("", "ip6_service"); %>';
-
 <% login_state_hook(); %>
 <% openvpn_cli_cert_hook(); %>
-
 function initial(){
 	show_banner(0);
 	show_menu(4, -1, 0);
 	show_footer();
-
 	if (!found_app_ovpn())
 		document.form.vpnc_type.remove(2);
 	else
 	if (!support_ipv6() || ip6_service == ''){
 		var o = document.form.vpnc_ov_prot;
-		o.remove(2);
-		o.remove(2);
+		for (var i = 0; i < 4; i++) {
+			o.remove(2);
+		}
 	}
-
 	if (fw_enable_x == "0"){
 		var o1 = document.form.vpnc_sfw;
 		o1.remove(0);
 		o1.remove(0);
 	}
-
 	change_vpnc_enabled();
-
 	showTab(getHash());
-
 	load_body();
 }
-
 function update_vpnc_status(vpnc_state){
 	this.vpnc_state_last = vpnc_state;
 	showhide_div('col_vpnc_state', (vpnc_state == '1' && document.form.vpnc_enable[0].checked) ? 1 : 0);
 }
-
 function applyRule(){
 	if(validForm()){
 		showLoading();
@@ -87,7 +75,6 @@ function applyRule(){
 		document.form.submit();
 	}
 }
-
 function valid_rlan_subnet(oa, om){
 	var ip4ra = parse_ipv4_addr(oa.value);
 	var ip4rm = parse_ipv4_addr(om.value);
@@ -103,36 +90,28 @@ function valid_rlan_subnet(oa, om){
 		om.select();
 		return false;
 	}
-
 	for (i=0;i<4;i++)
 		ip4ra[i] = ip4ra[i] & ip4rm[i];
 	var r_str = ip4ra[0] + '.' + ip4ra[1] + '.' + ip4ra[2] + '.' + ip4ra[3];
-
 	if (matchSubnet2(oa.value, om.value, lan_ipaddr_x, lan_netmask_x)) {
 		alert("Please set remote subnet not equal LAN subnet (" + r_str + ")!");
 		oa.focus();
 		oa.select();
 		return false;
 	}
-
 	oa.value = r_str;
-
 	return true;
 }
-
 function validForm(){
 	if (!document.form.vpnc_enable[0].checked)
 		return true;
-
 	if(document.form.vpnc_peer.value.length < 4){
 		alert("Remote host is invalid!");
 		document.form.vpnc_peer.focus();
 		return false;
 	}
-
 	if(!validate_string(document.form.vpnc_peer))
 		return false;
-
 	var mode = document.form.vpnc_type.value;
 	if (mode == "2") {
 		if(!validate_range(document.form.vpnc_ov_port, 1, 65535))
@@ -147,13 +126,10 @@ function validForm(){
 		if (document.form.vpnc_rnet.value.length > 0)
 			return valid_rlan_subnet(document.form.vpnc_rnet, document.form.vpnc_rmsk);
 	}
-
 	return true;
 }
-
 function done_validating(action){
 }
-
 function textarea_ovpn_enabled(v){
 	inputCtrl(document.form['ovpncli.client.conf'], v);
 	inputCtrl(document.form['ovpncli.ca.crt'], v);
@@ -161,13 +137,10 @@ function textarea_ovpn_enabled(v){
 	inputCtrl(document.form['ovpncli.client.key'], v);
 	inputCtrl(document.form['ovpncli.ta.key'], v);
 }
-
 function change_vpnc_enabled() {
 	var v = document.form.vpnc_enable[0].checked;
-
 	showhide_div('tbl_vpnc_config', v);
 	showhide_div('tbl_vpnc_server', v);
-
 	if (!v){
 		showhide_div('tab_vpnc_ssl', 0);
 		showhide_div('tbl_vpnc_route', 0);
@@ -176,32 +149,28 @@ function change_vpnc_enabled() {
 		change_vpnc_type();
 	}
 }
-
 function change_vpnc_type() {
 	var mode = document.form.vpnc_type.value;
 	var is_ov = (mode == "2") ? 1 : 0;
-
 	showhide_div('row_vpnc_auth', !is_ov);
 	showhide_div('row_vpnc_mppe', !is_ov);
 	showhide_div('row_vpnc_pppd', !is_ov);
 	showhide_div('row_vpnc_mtu', !is_ov);
 	showhide_div('row_vpnc_mru', !is_ov);
 	showhide_div('tbl_vpnc_route', !is_ov);
-
 	showhide_div('row_vpnc_ov_port', is_ov);
 	showhide_div('row_vpnc_ov_prot', is_ov);
 	showhide_div('row_vpnc_ov_auth', is_ov);
 	showhide_div('row_vpnc_ov_mdig', is_ov);
 	showhide_div('row_vpnc_ov_ciph', is_ov);
-	showhide_div('row_vpnc_ov_clzo', is_ov);
+	showhide_div('row_vpnc_ov_ncp_clist', is_ov);
+	showhide_div('row_vpnc_ov_compress', is_ov);
 	showhide_div('row_vpnc_ov_atls', is_ov);
 	showhide_div('row_vpnc_ov_mode', is_ov);
 	showhide_div('row_vpnc_ov_conf', is_ov);
 	showhide_div('tab_vpnc_ssl', is_ov);
 	showhide_div('certs_hint', (is_ov && !openvpn_cli_cert_found()) ? 1 : 0);
-
 	textarea_ovpn_enabled(is_ov);
-
 	if (is_ov) {
 		change_vpnc_ov_auth();
 		change_vpnc_ov_atls();
@@ -213,32 +182,24 @@ function change_vpnc_type() {
 		showhide_div('row_vpnc_user', 1);
 		showhide_div('row_vpnc_pass', 1);
 	}
-
 	showhide_div('col_vpnc_state', (vpnc_state_last == '1') ? 1 : 0);
 }
-
 function change_vpnc_ov_auth() {
 	var v = (document.form.vpnc_ov_auth.value == "1") ? 1 : 0;
-
 	showhide_div('row_vpnc_user', v);
 	showhide_div('row_vpnc_pass', v);
 	showhide_div('row_client_key', !v);
 	showhide_div('row_client_crt', !v);
 }
-
 function change_vpnc_ov_atls() {
-	var v = (document.form.vpnc_ov_atls.value == "1") ? 1 : 0;
-
+	var v = (document.form.vpnc_ov_atls.value != "0") ? 1 : 0;
 	showhide_div('row_ta_key', v);
 	inputCtrl(document.form['ovpncli.ta.key'], v);
 }
-
 function change_vpnc_ov_mode() {
 	showhide_div('row_vpnc_ov_cnat', (document.form.vpnc_ov_mode.value == "1") ? 0 : 1);
 }
-
 var arrHashes = ["cfg", "ssl"];
-
 function showTab(curHash){
 	var obj = $('tab_vpnc_'+curHash.slice(1));
 	if (obj == null || obj.style.display == 'none')
@@ -254,7 +215,6 @@ function showTab(curHash){
 	}
 	window.location.hash = curHash;
 }
-
 function getHash(){
 	var curHash = window.location.hash.toLowerCase();
 	for(var i = 0; i < arrHashes.length; i++){
@@ -263,7 +223,6 @@ function getHash(){
 	}
 	return ('#'+arrHashes[0]);
 }
-
 </script>
 
 <style>
@@ -392,10 +351,12 @@ function getHash(){
                                     <th><#OVPN_Prot#></th>
                                     <td>
                                         <select name="vpnc_ov_prot" class="input">
-                                            <option value="0" <% nvram_match_x("", "vpnc_ov_prot", "0","selected"); %>>UDP (*)</option>
-                                            <option value="1" <% nvram_match_x("", "vpnc_ov_prot", "1","selected"); %>>TCP</option>
+                                            <option value="0" <% nvram_match_x("", "vpnc_ov_prot", "0","selected"); %>>UDP over IPv4 (*)</option>
+                                            <option value="1" <% nvram_match_x("", "vpnc_ov_prot", "1","selected"); %>>TCP over IPv4</option>
                                             <option value="2" <% nvram_match_x("", "vpnc_ov_prot", "2","selected"); %>>UDP over IPv6</option>
                                             <option value="3" <% nvram_match_x("", "vpnc_ov_prot", "3","selected"); %>>TCP over IPv6</option>
+                                            <option value="4" <% nvram_match_x("", "vpnc_ov_prot", "4","selected"); %>>UDP both</option>
+                                            <option value="5" <% nvram_match_x("", "vpnc_ov_prot", "5","selected"); %>>TCP both</option>
                                         </select>
                                     </td>
                                 </tr>
@@ -500,23 +461,31 @@ function getHash(){
                                             <option value="6" <% nvram_match_x("", "vpnc_ov_ciph", "6","selected"); %>>[DES-EDE3-CBC] 3DES, 192 bit</option>
                                             <option value="7" <% nvram_match_x("", "vpnc_ov_ciph", "7","selected"); %>>[DESX-CBC] DES-X, 192 bit</option>
                                             <option value="8" <% nvram_match_x("", "vpnc_ov_ciph", "8","selected"); %>>[AES-256-CBC] AES, 256 bit</option>
-                                            <option value="9" <% nvram_match_x("", "vpnc_ov_ciph", "9","selected"); %>>[CAMELLIA-128-CBC] CAM, 128 bit</option>
-                                            <option value="10" <% nvram_match_x("", "vpnc_ov_ciph", "10","selected"); %>>[CAMELLIA-192-CBC] CAM, 192 bit</option>
-                                            <option value="11" <% nvram_match_x("", "vpnc_ov_ciph", "11","selected"); %>>[CAMELLIA-256-CBC] CAM, 256 bit</option>
-                                            <option value="12" <% nvram_match_x("", "vpnc_ov_ciph", "12","selected"); %>>[AES-128-GCM] AES-GCM, 128 bit</option>
-                                            <option value="13" <% nvram_match_x("", "vpnc_ov_ciph", "13","selected"); %>>[AES-192-GCM] AES-GCM, 192 bit</option>
-                                            <option value="14" <% nvram_match_x("", "vpnc_ov_ciph", "14","selected"); %>>[AES-256-GCM] AES-GCM, 256 bit</option>
+                                            <option value="9" <% nvram_match_x("", "vpnc_ov_ciph", "9","selected"); %>>[CAMELLIA-128-CBC] CAM, 128 bit</option>
+                                            <option value="10" <% nvram_match_x("", "vpnc_ov_ciph", "10","selected"); %>>[CAMELLIA-192-CBC] CAM, 192 bit</option>
+                                            <option value="11" <% nvram_match_x("", "vpnc_ov_ciph", "11","selected"); %>>[CAMELLIA-256-CBC] CAM, 256 bit</option>
+                                            <option value="12" <% nvram_match_x("", "vpnc_ov_ciph", "12","selected"); %>>[AES-128-GCM] AES-GCM, 128 bit</option>
+                                            <option value="13" <% nvram_match_x("", "vpnc_ov_ciph", "13","selected"); %>>[AES-192-GCM] AES-GCM, 192 bit</option>
+                                            <option value="14" <% nvram_match_x("", "vpnc_ov_ciph", "14","selected"); %>>[AES-256-GCM] AES-GCM, 256 bit</option>
+                                            <option value="15" <% nvram_match_x("", "vpnc_ov_ciph", "15","selected"); %>>[CHACHA20-POLY1305], 256 bit</option>
                                         </select>
                                     </td>
                                 </tr>
-                                <tr id="row_vpnc_ov_clzo" style="display:none">
-                                    <th><#OVPN_CLZO#></th>
+                                <tr id="row_vpnc_ov_ncp_clist" style="display:none">
+                                    <th><#OVPN_NCP_clist#></th>
                                     <td>
-                                        <select name="vpnc_ov_clzo" class="input">
-                                            <option value="0" <% nvram_match_x("", "vpnc_ov_clzo", "0","selected"); %>><#btn_Disable#></option>
-                                            <option value="1" <% nvram_match_x("", "vpnc_ov_clzo", "1","selected"); %>><#OVPN_CLZO_Item1#></option>
-                                            <option value="2" <% nvram_match_x("", "vpnc_ov_clzo", "2","selected"); %>><#OVPN_CLZO_Item2#> (*)</option>
-                                            <option value="3" <% nvram_match_x("", "vpnc_ov_clzo", "3","selected"); %>><#OVPN_CLZO_Item3#></option>
+                                        <input type="text" maxlength="256" size="15" name="vpnc_ov_ncp_clist" class="input" style="width: 286px;" value="<% nvram_get_x("", "vpnc_ov_ncp_clist"); %>" onkeypress="return is_string(this,event);"/>
+                                    </td>
+                                </tr>
+                                <tr id="row_vpnc_ov_compress" style="display:none">
+                                    <th><#OVPN_COMPRESS#></th>
+                                    <td>
+                                        <select name="vpnc_ov_compress" class="input">
+                                            <option value="0" <% nvram_match_x("", "vpnc_ov_compress", "0","selected"); %>><#btn_Disable#></option>
+                                            <option value="1" <% nvram_match_x("", "vpnc_ov_compress", "1","selected"); %>><#OVPN_COMPRESS_Item1#></option>
+                                            <option value="2" <% nvram_match_x("", "vpnc_ov_compress", "2","selected"); %>><#OVPN_COMPRESS_Item2#> (*)</option>
+                                            <option value="3" <% nvram_match_x("", "vpnc_ov_compress", "3","selected"); %>><#OVPN_COMPRESS_Item3#></option>
+                                            <option value="4" <% nvram_match_x("", "vpnc_ov_compress", "4","selected"); %>><#OVPN_COMPRESS_Item4#></option>
                                         </select>
                                     </td>
                                 </tr>
@@ -526,6 +495,8 @@ function getHash(){
                                         <select name="vpnc_ov_atls" class="input" onchange="change_vpnc_ov_atls();">
                                             <option value="0" <% nvram_match_x("", "vpnc_ov_atls", "0","selected"); %>><#checkbox_No#></option>
                                             <option value="1" <% nvram_match_x("", "vpnc_ov_atls", "1","selected"); %>><#OVPN_HMAC_Item1#></option>
+                                            <option value="2" <% nvram_match_x("", "vpnc_ov_atls", "2","selected"); %>><#OVPN_HMAC_Item2#></option>
+                                            <option value="3" <% nvram_match_x("", "vpnc_ov_atls", "3","selected"); %>><#OVPN_USE_TCV2_ItemC#></option>
                                         </select>
                                     </td>
                                 </tr>
@@ -631,7 +602,7 @@ function getHash(){
                                 </tr>
                                 <tr id="row_ta_key">
                                     <td style="padding-bottom: 0px; border-top: 0 none;">
-                                        <span class="caption-bold">ta.key (TLS Auth Key) - secret:</span>
+                                        <span class="caption-bold">ta.key/tc.key(ctc2.key) (TLS Auth/Crypt(Crypt-v2) Key) - secret:</span>
                                         <textarea rows="4" wrap="off" spellcheck="false" maxlength="8192" class="span12" name="ovpncli.ta.key" style="font-family:'Courier New'; font-size:12px;"><% nvram_dump("ovpncli.ta.key",""); %></textarea>
                                     </td>
                                 </tr>
