@@ -763,4 +763,3 @@ function validate_wlkey(key_obj){
 	
 	return iscurrect;
 }
-
