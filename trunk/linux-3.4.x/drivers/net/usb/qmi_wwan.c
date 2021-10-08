@@ -175,6 +175,21 @@ static const u8 buggy_fw_addr[ETH_ALEN] = {0x00, 0xa0, 0xc6, 0x00, 0x00, 0x00};
  * to 00:a0:c6:00:00:00 despite the host address being different.
  * This function will also fixup such packets.
  */
+struct sk_buff *qmi_wwan_tx_fixup(struct usbnet *dev, struct sk_buff *skb, gfp_t flags)
+{
+	if (dev->udev->descriptor.idVendor != cpu_to_le16(0x2C7C)) return skb;
+	
+	// Skip Ethernet header from message
+	if (skb_pull(skb, ETH_HLEN)) {
+		return skb;
+	} else {
+		dev_err(&dev->intf->dev, "Packet Dropped ");
+	}
+	// Filter the packet out, release it
+	dev_kfree_skb_any(skb);
+	return NULL;
+}
+
 static int qmi_wwan_rx_fixup(struct usbnet *dev, struct sk_buff *skb)
 {
 	struct qmi_wwan_state *info = (void *)&dev->data;
