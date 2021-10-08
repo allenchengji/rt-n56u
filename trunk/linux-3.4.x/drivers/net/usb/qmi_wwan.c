@@ -515,6 +515,20 @@ next_desc:
 	}
 	dev->net->netdev_ops = &qmi_wwan_netdev_ops;
 	dev->net->sysfs_groups[0] = &qmi_wwan_sysfs_attr_group;
+#if 1 //Added by Quectel
+	if (dev->udev->descriptor.idVendor == cpu_to_le16(0x2C7C)) {
+		dev_info(&intf->dev,  "Quectel  EC25&EC21&EC20R2.0&EG91&EG95&EG06&EP06&EM06&BG96 work on RawIP mode\n");
+		dev->net->flags |= IFF_NOARP;
+		usb_control_msg(
+			interface_to_usbdev(intf),
+			usb_sndctrlpipe(interface_to_usbdev(intf), 0),
+			0x22, //USB_CDC_REQ_SET_CONTROL_LINE_STATE
+			0x21, //USB_DIR_OUT | USB_TYPE_CLASS | USB_RECIP_INTERFACE
+			1, //active CDC DTR
+			intf->cur_altsetting->desc.bInterfaceNumber,
+			NULL, 0, 100);
+	}
+#endif
 err:
 	return status;
 }
@@ -606,6 +620,7 @@ static const struct driver_info	qmi_wwan_info = {
 	.unbind		= qmi_wwan_unbind,
 	.manage_power	= qmi_wwan_manage_power,
 	.rx_fixup       = qmi_wwan_rx_fixup,
+        .tx_fixup       = qmi_wwan_tx_fixup,
 };
 
 static const struct driver_info	qmi_wwan_info_quirk_dtr = {
@@ -615,6 +630,7 @@ static const struct driver_info	qmi_wwan_info_quirk_dtr = {
 	.unbind		= qmi_wwan_unbind,
 	.manage_power	= qmi_wwan_manage_power,
 	.rx_fixup       = qmi_wwan_rx_fixup,
+        .tx_fixup       = qmi_wwan_tx_fixup,
 	.data           = QMI_WWAN_QUIRK_DTR,
 };
 
